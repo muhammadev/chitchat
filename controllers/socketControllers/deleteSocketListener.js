@@ -1,11 +1,11 @@
-module.exports = function deleteSocketListener(listener, informer, socketsListeners) {
-  const informersArray = socketsListeners[listener]; // Array of listener's informers
+module.exports = function deleteSocketListener(listener, partner, socketsListeners) {
+  const partnersArray = socketsListeners[listener]; // Array of listener's partners
 
-  // filter the informer out of the array
-  const updatedInformersArray = informersArray.filter(informerUsername => informerUsername !== informer);
+  // filter the partner out of the array
+  const updatedPartnersArray = partnersArray.filter(partnerUsername => partnerUsername !== partner);
 
-  // add the updated informersArray to the object
-  socketsListeners[listener] = [...updatedInformersArray];
+  // add the updated partnersArray to the object
+  socketsListeners[listener] = [...updatedPartnersArray];
 
   return socketsListeners;
 }

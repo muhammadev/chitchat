@@ -1,35 +1,35 @@
-module.exports = function setSocketListener(listener, informer, socketsListeners) {
+module.exports = function setSocketListener(listener, partner, socketsListeners) {
   /*
     --- socketsListeners object schema ---
     socketListeners = {
-      socketListener1: [informer2, informer3]
+      socketListener1: [partner2, partner3]
     }
 
     - socketListener1's real value is the listener username
-    - informer2, and informer3's real values are the informers usernames
-    - a socket listener is a user subscribed to get certain updates from an informer
-    - updates such as informer is online, informer is offline, informer is writing, etc
-    - a socketListener's username is a key which its value is an array consists of a list of informers' usernames
-    - setSocketListener method's job is to check whether the informer user is a new user or not
+    - partner2, and partner3's real values are the partners usernames
+    - a socket listener is a user subscribed to get certain updates from an partner
+    - updates such as partner is online, partner is offline, partner is writing, etc
+    - a socketListener's username is a key which its value is an array consists of a list of partners' usernames
+    - setSocketListener method's job is to check whether the partner user is a new user or not
     - if not, do nothing
     - if a new user, inject to the socketListener's array
-    - the method takes three arguments, the listener's username, the informer's username, and the socketsListeners object
+    - the method takes three arguments, the listener's username, the partner's username, and the socketsListeners object
     - it returns the updated socketsListeners object
   */
 
-  const informersArray = socketsListeners[listener]; // Array of listener's informers
+  const partnersArray = socketsListeners[listener]; // Array of listener's partners
 
-  if (informersArray /*existed*/) {
-    // check if the informer is not subscribed yet
-    if (informersArray.indexOf(informer) === -1) {
-      informersArray.push(informer);
+  if (partnersArray /*existed*/) {
+    // check if the partner is not subscribed yet
+    if (partnersArray.indexOf(partner) === -1) {
+      partnersArray.push(partner);
 
-      // add the updated informersArray to the object
-      socketsListeners[listener] = [...informersArray];
+      // add the updated partnersArray to the object
+      socketsListeners[listener] = [...partnersArray];
     }
   } else {
-    // if this is the first informer for that listener, create the informers' array
-    socketsListeners[listener] = [informer];
+    // if this is the first partner for that listener, create the partners' array
+    socketsListeners[listener] = [partner];
   }
 
   return socketsListeners;

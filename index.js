@@ -19,6 +19,7 @@ const getUsers = require("./controllers/routerControllers/getUsers");
 const setSocketListener = require("./controllers/socketControllers/setSocketListener");
 const deleteSocketListener = require("./controllers/socketControllers/deleteSocketListener");
 const setUserStatus = require("./controllers/socketControllers/setUserStatus");
+const notifyListeners = require("./controllers/socketControllers/notifyListeners");
 
 // configuring dotenv
 dotenv.config();
@@ -80,41 +81,27 @@ io.on("connection", (socket) => {
   // set the user into online_users
   online_users[user] = socket.id;
   console.log({online_users});
+  console.log("now online");
+  // update isOnline status
+  setUserStatus(user, true);
+  notifyListeners.statusUpdate(io, socketsListeners, online_users, user, true)
 
-  socket.on("set socket listener", (informerUsername) => {
+  socket.on("set socket listener", (partner) => {
     socketsListeners = setSocketListener(
       user,
-      informerUsername,
+      partner,
       socketsListeners
     );
     console.log("set socket listener ", socketsListeners);
   });
 
-  socket.on("delete socket listener", (informerUsername) => {
+  socket.on("delete socket listener", (partner) => {
     socketsListeners = deleteSocketListener(
       user,
-      informerUsername,
+      partner,
       socketsListeners
     );
     console.log("delete socket listener ", socketsListeners);
-  });
-
-  socket.on("online", () => {
-    console.log("now online");
-    // update isOnline status
-    setUserStatus(user, true);
-
-    if (socketsListeners) {
-      Object.keys(socketsListeners).forEach((listener) => {
-        if (socketsListeners[listener].indexOf(user) !== -1) {
-          console.log(online_users[listener], "look at here");
-          io.to(online_users[listener]).emit("user status update", {
-            user,
-            isOnline: true,
-          });
-        }
-      });
-    }
   });
 
   socket.on("message", (message, to) => {
@@ -128,17 +115,6 @@ io.on("connection", (socket) => {
 
     // update isOnline status
     setUserStatus(user, false);
-
-    if (socketsListeners) {
-      Object.keys(socketsListeners).forEach((listener) => {
-        if (socketsListeners[listener].indexOf(user) !== -1) {
-          console.log("found a listener ", online_users[listener]);
-          io.to(online_users[listener]).emit("user status update", {
-            user,
-            isOnline: false,
-          });
-        }
-      });
-    }
+    notifyListeners.statusUpdate(io, socketsListeners, online_users, user, false);
   });
 });
