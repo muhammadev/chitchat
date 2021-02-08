@@ -16,10 +16,9 @@ const loginUser = require("./controllers/routerControllers/loginUser");
 const getCurrentUser = require("./controllers/routerControllers/getCurrentUser");
 const getUser = require("./controllers/routerControllers/getUser");
 const getUsers = require("./controllers/routerControllers/getUsers");
-const setSocketListener = require("./controllers/socketControllers/setSocketListener");
-const deleteSocketListener = require("./controllers/socketControllers/deleteSocketListener");
-const setUserStatus = require("./controllers/socketControllers/setUserStatus");
-const notifyListeners = require("./controllers/socketControllers/notifyListeners");
+const handleSocketListeners = require("./controllers/socketControllers/handleSocketListeners");
+const handleUserConnection = require("./controllers/socketControllers/handleUserConnection");
+const setUserStatus = require("./controllers/socketControllers/updateUserStatus");
 
 // configuring dotenv
 dotenv.config();
@@ -72,49 +71,22 @@ const io = require("socket.io")(server, {
 });
 
 // setting up IO
-
-let socketsListeners = {};
-let online_users = {};
-
 io.on("connection", (socket) => {
-  const { user } = socket.handshake.query;
-  // set the user into online_users
-  online_users[user] = socket.id;
-  console.log({online_users});
-  console.log("now online");
-  // update isOnline status
-  setUserStatus(user, true);
-  notifyListeners.statusUpdate(io, socketsListeners, online_users, user, true)
+  console.log("got a new one ", io.sockets.adapter.rooms);
 
-  socket.on("set socket listener", (partner) => {
-    socketsListeners = setSocketListener(
-      user,
-      partner,
-      socketsListeners
-    );
-    console.log("set socket listener ", socketsListeners);
-  });
-
-  socket.on("delete socket listener", (partner) => {
-    socketsListeners = deleteSocketListener(
-      user,
-      partner,
-      socketsListeners
-    );
-    console.log("delete socket listener ", socketsListeners);
-  });
-
-  socket.on("message", (message, to) => {
-    io.to(online_users[to]).emit("message", message)
-  })
+  handleUserConnection.connect(io, socket);
 
   // on disconnect, delete user from online_users, and update status to offline
   socket.on("disconnect", () => {
-    delete online_users[socket.handshake.query.user];
-    console.log("user disconnected", online_users);
-
-    // update isOnline status
-    setUserStatus(user, false);
-    notifyListeners.statusUpdate(io, socketsListeners, online_users, user, false);
+    handleUserConnection.disconnect(io, socket);
   });
 });
+
+const connectUser = (user, socketId) => {
+  online_users[user] = socketId; // add user to online users list
+  console.log({ online_users });
+
+  setUserStatus(user, true); // update user isOnline status
+
+  notifyListeners.statusUpdate(io, socketsListeners, online_users, user, true); // notify user's listeners
+};
