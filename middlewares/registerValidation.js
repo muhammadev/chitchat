@@ -14,6 +14,14 @@ module.exports = [
           return Promise.reject("Username is taken");
         } else return true;
       });
+    })
+    .custom((username) => {
+      const result = /^(?=[a-z_\d]*[a-z])[a-z_\d]{2,20}$/.test(username);
+      if (!result) {
+        return Promise.reject("username must contain only letters and numbers");
+      }
+
+      return true;
     }),
   body("email")
     .isEmail()
@@ -24,5 +32,5 @@ module.exports = [
         else return true;
       });
     }),
-  body("password", "password is not valid").exists().isLength({ min: 8 })
-]
+  body("password", "password is not valid").exists().isLength({ min: 8 }),
+];
