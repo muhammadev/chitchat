@@ -8,7 +8,7 @@ module.exports.connect = async function (io, socket) {
   let roomName = roomUsersArr.join("--with--");
 
   await socket.join(roomName);
-  io.to(roomName).emit("user is online");
+  io.to(roomName).emit("user status", true);
 
   updateUserStatus(user, true);
 
@@ -23,7 +23,7 @@ module.exports.disconnect = async function (io, socket) {
   let roomName = roomUsersArr.join("--with--");
 
   await socket.leave(roomName);
-  io.to(roomName).emit("user is online");
+  io.to(roomName).emit("user status", false);
 
 
   updateUserStatus(user, false);
