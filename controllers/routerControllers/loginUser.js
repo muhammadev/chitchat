@@ -25,7 +25,7 @@ module.exports = (req, res) => {
     }
 
     // compare passwords
-    bcrypt.compare(password, user.password, (err, result) => {
+    bcrypt.compare(password, user.password, (err, matched) => {
       if (err) {
         return res.status(500).send({
           errorMessage: "server error. #801",
@@ -33,13 +33,13 @@ module.exports = (req, res) => {
         });
       }
 
-      if (result) {
+      if (matched) {
         // create the token
-        jwt.sign({ id: user.id }, process.env.JWT_SECRET, (err, token) => {
+        jwt.sign({ id: user._id }, process.env.JWT_SECRET, (err, token) => {
           if (err) return res.send({ errorMessage: "server error. #802" });
 
-          const { id, fullname, username, email } = user;
-          const userData = { id, fullname, username, email };
+          const { _id, fullname, username, email } = user;
+          const userData = { _id, fullname, username, email };
 
           res.status(200).send({
             token,

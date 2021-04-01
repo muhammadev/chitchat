@@ -1,31 +1,27 @@
 const express = require("express");
-// define express app
 const app = express();
 const dotenv = require("dotenv");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const User = require("./models/User");
-// middlewares imports
+// middlewares
 const authenticate = require("./middlewares/authenticate");
 const registerValidation = require("./middlewares/registerValidation");
 const loginValidation = require("./middlewares/loginValidation");
-// controllers imports
+// controllers
 const registerUser = require("./controllers/routerControllers/registerUser");
 const loginUser = require("./controllers/routerControllers/loginUser");
-const getCurrentUser = require("./controllers/routerControllers/getCurrentUser");
+const authenticateUser = require("./controllers/routerControllers/authenticateUser");
 const getUser = require("./controllers/routerControllers/getUser");
-const getUsers = require("./controllers/routerControllers/getUsers");
-const handleSocketListeners = require("./controllers/socketControllers/handleSocketListeners");
-const handleUserConnection = require("./controllers/socketControllers/handleUserConnection");
-const setUserStatus = require("./controllers/socketControllers/updateUserStatus");
+const getAllUsers = require("./controllers/routerControllers/getAllUsers");
+const getUserChat = require("./controllers/routerControllers/getUserChat");
+const handleSocketConnection = require("./controllers/socketControllers/handleSocketConnection");
 
 // configuring dotenv
 dotenv.config();
 
 // parsing request body
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // connecting to db
 mongoose
@@ -36,27 +32,33 @@ mongoose
   .then(console.log("connected to db"))
   .catch((err) => console.error("error connecting to db: ", err));
 
+
 // configuring cors requests
 app.use(cors()); // enable cors for all requests -- is that ok?
 
+// authentication middleware
+app.use("/api/*", authenticate);
+
 // --- GET REQUESTS ---
-
+app.get("/", (req, res) => {
+  res.send("server's up and running")
+})
 // authenticate user
-app.get("/users/authenticate-user", authenticate, getCurrentUser);
-
+app.get("/api/users/auth", authenticateUser);
 // get all users
-app.get("/users", authenticate, getUsers);
-
+app.get("/api/users", getAllUsers);
 // get one user
-app.get("/users/:id", authenticate, getUser);
+app.get("/api/users/:id", getUser);
+// get messages of user (to and from them)
+app.get("/api/users/:id/messages", getUserChat);
+
 
 // --- POST REQUESTS ---
-
 // register user
 app.post("/register", ...registerValidation, registerUser);
-
 // login user
 app.post("/login", ...loginValidation, loginUser);
+
 
 // listening to port
 const server = app.listen(process.env.PORT, () => {
@@ -72,21 +74,10 @@ const io = require("socket.io")(server, {
 
 // setting up IO
 io.on("connection", (socket) => {
-  console.log("got a new one ", io.sockets.adapter.rooms);
-
-  handleUserConnection.connect(io, socket);
+  handleSocketConnection.connect(io, socket);
 
   // on disconnect, delete user from online_users, and update status to offline
   socket.on("disconnect", () => {
-    handleUserConnection.disconnect(io, socket);
+    handleSocketConnection.disconnect(io, socket);
   });
 });
-
-const connectUser = (user, socketId) => {
-  online_users[user] = socketId; // add user to online users list
-  console.log({ online_users });
-
-  setUserStatus(user, true); // update user isOnline status
-
-  notifyListeners.statusUpdate(io, socketsListeners, online_users, user, true); // notify user's listeners
-};
