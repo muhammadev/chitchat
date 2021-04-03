@@ -61,7 +61,7 @@ app.post("/login", ...loginValidation, loginUser);
 
 
 // listening to port
-const server = app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT || 3001, () => {
   console.log("listening to port: ", process.env.PORT);
 });
 
