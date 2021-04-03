@@ -13,7 +13,7 @@ const loginUser = require("./controllers/routerControllers/loginUser");
 const authenticateUser = require("./controllers/routerControllers/authenticateUser");
 const getUser = require("./controllers/routerControllers/getUser");
 const getAllUsers = require("./controllers/routerControllers/getAllUsers");
-const getUserChat = require("./controllers/routerControllers/getUserChat");
+const getChat = require("./controllers/routerControllers/getChat");
 const handleSocketConnection = require("./controllers/socketControllers/handleSocketConnection");
 
 // configuring dotenv
@@ -49,8 +49,8 @@ app.get("/api/users/auth", authenticateUser);
 app.get("/api/users", getAllUsers);
 // get one user
 app.get("/api/users/:id", getUser);
-// get messages of user (to and from them)
-app.get("/api/users/:id/messages", getUserChat);
+// get chat of two participants
+app.get("/api/chat", getChat);
 
 
 // --- POST REQUESTS ---

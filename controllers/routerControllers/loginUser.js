@@ -39,7 +39,7 @@ module.exports = (req, res) => {
           if (err) return res.send({ errorMessage: "server error. #802" });
 
           const { _id, fullname, username, email } = user;
-          const userData = { _id, fullname, username, email };
+          const userData = { _id, fullname, username, email, online: true };
 
           res.status(200).send({
             token,

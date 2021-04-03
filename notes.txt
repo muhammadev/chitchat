@@ -1,0 +1,11 @@
+  **** onlineSockets scheme ****
+  {
+    'username': {
+      'id': <socketId>,
+      'waitlist': ['someusername', 'someotherusername']
+    },
+    'anotherusername': {
+      'id': <socketId>,
+      'waitlist': []
+    }
+  }

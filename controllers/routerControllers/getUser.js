@@ -8,8 +8,8 @@ module.exports = (req, res) => {
       return res.status(404).send({ errorMessage: "user not found" });
     }
 
-    const { _id, fullname, username, messages, isOnline } = user;
-    const userData = { _id, fullname, username, messages, isOnline };
+    const { _id, fullname, username, messages, online } = user;
+    const userData = { _id, fullname, username, messages, online };
 
     return res.status(200).send({ user: userData });
   });

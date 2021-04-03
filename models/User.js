@@ -21,7 +21,7 @@ const UserSchema = new Schema({
     type: Array,
     default: [],
   },
-  isOnline: {
+  online: {
     type: Boolean,
     default: false,
   },

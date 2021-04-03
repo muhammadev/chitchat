@@ -40,7 +40,7 @@ module.exports = (req, res) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
 
       const { id, fullname, username, email } = user;
-      const userData = { id, fullname, username, email };
+      const userData = { id, fullname, username, email, online: true };
 
       res.status(200).send({
         token,

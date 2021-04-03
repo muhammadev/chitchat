@@ -1,19 +1,6 @@
 const Message = require("../../models/Message");
 const setOnlineOrOffline = require("./setOnlineOrOffline");
 const onlineSockets = {};
-/*
-  **** onlineSockets scheme ****
-  {
-    'username': {
-      'id': <socketId>,
-      'waitlist': ['someusername', 'someotherusername']
-    },
-    'anotherusername': {
-      'id': <socketId>,
-      'waitlist': []
-    }
-  }
-*/
 
 module.exports.connect = async function (io, socket) {
   const { user: userId } = socket.handshake.query;
@@ -92,20 +79,20 @@ module.exports.connect = async function (io, socket) {
   };
 
   const markDelivered = (messagesToMark) => {
+    console.log("received 'delivered' event: ", messagesToMark);
     // make sure it's an array even if one message
     messagesToMark = Array.isArray(messagesToMark)
       ? messagesToMark
       : [messagesToMark];
 
-    const socketsToNotify = []; // add messages senders here to emit the event to them only once
-    if (Array.isArray(messagesToMark)) {
-      messagesToMark.forEach(async (messageToMark) => {
+    let socketsToNotify = []; // add messages senders here to emit the event to them only once
+    let promise = new Promise(function (resolve, reject) {
+      messagesToMark.forEach(async (messageToMark, index) => {
         // update message status in db
         const message = await Message.findOne({ _id: messageToMark._id });
         message.delivered = true;
         message.save((err, markedMessage) => {
-          if (err)
-            return console.log("error marking messages as delivered: ", err);
+          if (err) return reject(`error saving delivered message ${err}`);
 
           markedMessage
             .populate("from", "_id fullname username")
@@ -114,47 +101,49 @@ module.exports.connect = async function (io, socket) {
               "_id fullname username",
               function (err, populatedMessage) {
                 if (err) {
-                  return console.log(
-                    "error populating updated messages: ",
-                    err
-                  );
+                  return reject(`error populating message ${err}`);
                 }
 
                 let msgSender = populatedMessage.from._id;
                 if (!socketsToNotify.includes(msgSender)) {
                   socketsToNotify.push(msgSender);
                 }
+
+                if (index === messagesToMark.length - 1) resolve();
               }
             );
         });
       });
+    });
 
+    promise.then(function () {
+      console.log("from then: ", socketsToNotify);
       socketsToNotify.forEach((senderId) => {
         // if online, emit to sender -- otherwise, it's already updated in db, whenever they're online they'll fetch the updated version
         const senderSocket = onlineSockets[senderId];
-        console.log(
-          "gonna send 'delivered' event to this socket: ",
-          senderSocket
-        );
         if (senderSocket.id) {
           console.log("sending now the 'delivered' event");
           io.to(senderSocket.id).emit("delivered");
         }
       });
-    }
+    });
   };
 
   const markSeen = (messagesToMark) => {
-    const socketsToNotify = [];
+    // make sure it's an array even if one message
+    messagesToMark = Array.isArray(messagesToMark)
+      ? messagesToMark
+      : [messagesToMark];
 
-    if (Array.isArray(messagesToMark)) {
-      messagesToMark.forEach(async (messageToMark) => {
+    let socketsToNotify = []; // add messages senders here to emit the event to them only once
+    let promise = new Promise(function (resolve, reject) {
+      messagesToMark.forEach(async (messageToMark, index) => {
         // update message status in db
         const message = await Message.findOne({ _id: messageToMark._id });
         message.delivered = true;
         message.seen = true;
         message.save((err, markedMessage) => {
-          if (err) return console.log("error marking messages as seen: ", err);
+          if (err) return reject(`error saving seen message ${err}`);
 
           markedMessage
             .populate("from", "_id fullname username")
@@ -163,29 +152,32 @@ module.exports.connect = async function (io, socket) {
               "_id fullname username",
               function (err, populatedMessage) {
                 if (err) {
-                  return console.log(
-                    "error populating updated messages: ",
-                    err
-                  );
+                  return reject(`error populating message ${err}`);
                 }
 
                 let msgSender = populatedMessage.from._id;
                 if (!socketsToNotify.includes(msgSender)) {
                   socketsToNotify.push(msgSender);
                 }
+
+                if (index === messagesToMark.length - 1) resolve();
               }
             );
         });
       });
+    });
 
+    promise.then(function () {
+      console.log("from then: ", socketsToNotify);
       socketsToNotify.forEach((senderId) => {
-        // if online, emit to sender -- otherwise, it's already updated in db, whenever he's online they'll fetch the updated version
+        // if online, emit to sender -- otherwise, it's already updated in db, whenever they're online they'll fetch the updated version
         const senderSocket = onlineSockets[senderId];
         if (senderSocket.id) {
-          io.to(senderSocket.id).emit("seen");
+          console.log("sending now the 'seen' event");
+          io.to(senderSocket.id).emit('seen');
         }
       });
-    }
+    });
   };
 
   const addToWaitList = (participant) => {

@@ -9,8 +9,8 @@ module.exports = (req, res) => {
     
     const usersData = [];
     users.forEach(user => {
-      const {_id, fullname, username, messages, isOnline} = user;
-      const userData = {_id, fullname, username, messages, isOnline};
+      const {_id, fullname, username, messages, online} = user;
+      const userData = {_id, fullname, username, messages, online};
       usersData.push(userData)
     })
 
