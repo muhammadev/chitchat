@@ -36,6 +36,9 @@ mongoose
 // configuring cors requests
 app.use(cors()); // enable cors for all requests -- is that ok?
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'client/build')));
+
 // authentication middleware
 app.use("/api/*", authenticate);
 
@@ -51,6 +54,12 @@ app.get("/api/users", getAllUsers);
 app.get("/api/users/:id", getUser);
 // get chat of two participants
 app.get("/api/chat", getChat);
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname+'/client/build/index.html'));
+});
 
 
 // --- POST REQUESTS ---
